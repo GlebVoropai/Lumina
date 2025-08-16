@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Net;
 using System.Net.Sockets;
 
@@ -7,7 +7,7 @@ class Program
     static void Main()
     {
         UdpClient client = new UdpClient();
-        Console.WriteLine("Enter ESP IP (e.g., 192.168.100.74): ");
+        Console.WriteLine("Enter ESP IP (e.g., 192.168.1.50): ");
         string ip = Console.ReadLine();
         IPEndPoint ep = new IPEndPoint(IPAddress.Parse(ip), 4210);
 
