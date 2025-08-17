@@ -4,6 +4,54 @@
              xmlns:local="clr-namespace:LuminaGUI"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <Style TargetType="Slider">
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid>
+                            <!-- Фон трека -->
+                            <Border Height="16" VerticalAlignment="Center" Background="#2C2C2C" CornerRadius="4"/>
+                            <!-- Track с Thumb -->
+                            <Track x:Name="PART_Track" Maximum="{TemplateBinding Maximum}" Minimum="{TemplateBinding Minimum}" Value="{TemplateBinding Value}">
+                                <!-- Активная часть (DecreaseRepeatButton) -->
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton IsHitTestVisible="False" BorderThickness="0">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Height="16" Background="#1DE9B6" CornerRadius="4,0,0,4"
+                                                Margin="0,0, -4,0"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.DecreaseRepeatButton>
+
+                                <!-- Thumb -->
+                                <Track.Thumb>
+                                    <Thumb Width="16" Height="16">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Border Width="16" Height="16" Background="#1DE9B6" BorderThickness="0" CornerRadius="4" />
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <!-- Неактивная часть (IncreaseRepeatButton) -->
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton IsHitTestVisible="False" BorderThickness="0">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Height="16" Background="Transparent" CornerRadius="4"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
     </Application.Resources>
 </Application>

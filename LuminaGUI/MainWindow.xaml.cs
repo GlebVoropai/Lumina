@@ -3,26 +3,51 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Forms;
+using System.IO;
 
 namespace LuminaGUI
 {
     public partial class MainWindow : Window
     {
+        private System.Windows.Media.Color SelectedColor;
+        private NotifyIcon trayIcon;
+
         public MainWindow()
         {
             InitializeComponent();
+            UpdateColorPreview();
 
-            // Проверяем, что слайдеры созданы
-            if (HueSlider != null && SaturationSlider != null && LightnessSlider != null && ColorPreview != null)
+            // Инициализация tray icon
+            trayIcon = new NotifyIcon();
+            try
             {
-                // Устанавливаем значения по умолчанию
-                HueSlider.Value = 300;         // Пример: RGB(128,0,128) -> HSL примерно H=300, S=1, L=0.25
-                SaturationSlider.Value = 100;
-                LightnessSlider.Value = 25;
+                // Используем ресурс WPF
+                var iconUri = new Uri("pack://application:,,,/Logo.ico");
+                var iconStream = System.Windows.Application.GetResourceStream(iconUri)?.Stream;
 
-                // Обновляем превью
-                UpdateColorPreview();
+
+                if (iconStream != null)
+                {
+                    trayIcon.Icon = new System.Drawing.Icon(iconStream);
+                    trayIcon.Visible = true;
+                }
+                else
+                {
+                    System.Windows.MessageBox.Show("Tray icon resource not found!");
+                }
             }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Tray icon load error: {ex.Message}");
+            }
+
+            trayIcon.DoubleClick += (s, args) =>
+            {
+                this.Show();
+                this.WindowState = WindowState.Normal;
+                this.ShowInTaskbar = true;
+            };
         }
 
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -43,6 +68,9 @@ namespace LuminaGUI
 
         private void HSLSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
+            if (HueSlider == null || SaturationSlider == null || LightnessSlider == null || ColorPreview == null)
+                return;
+
             UpdateColorPreview();
         }
 
@@ -52,11 +80,13 @@ namespace LuminaGUI
             float s = (float)SaturationSlider.Value / 100f;
             float l = (float)LightnessSlider.Value / 100f;
 
-            ColorPreview.Background = new SolidColorBrush(HSLtoRGB(h, s, l));
+            System.Windows.Media.Color rgbColor = HSLtoRGB(h, s, l);
+
+            ColorPreview.Background = new SolidColorBrush(rgbColor);
+            SelectedColor = rgbColor;
         }
 
-        // Конвертация HSL -> RGB
-        public static Color HSLtoRGB(float h, float s, float l)
+        public static System.Windows.Media.Color HSLtoRGB(float h, float s, float l)
         {
             float c = (1 - Math.Abs(2 * l - 1)) * s;
             float x = c * (1 - Math.Abs((h / 60f) % 2 - 1));
@@ -75,7 +105,14 @@ namespace LuminaGUI
             byte g = (byte)((g1 + m) * 255);
             byte b = (byte)((b1 + m) * 255);
 
-            return Color.FromRgb(r, g, b);
+            return System.Windows.Media.Color.FromRgb(r, g, b);
+        }
+
+        private void Accept_Click(object sender, RoutedEventArgs e)
+        {
+            // Скрываем окно и показываем только в трее
+            this.Hide();
+            this.ShowInTaskbar = false;
         }
     }
 }
