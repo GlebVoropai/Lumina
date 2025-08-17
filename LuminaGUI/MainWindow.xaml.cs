@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Globalization;
+using System.IO;
 using System.Windows;
+using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Forms;
-using System.IO;
+using System.Windows.Media.Effects;
 
 namespace LuminaGUI
 {
@@ -84,6 +85,10 @@ namespace LuminaGUI
 
             ColorPreview.Background = new SolidColorBrush(rgbColor);
             SelectedColor = rgbColor;
+            if (ColorPreview.Effect is DropShadowEffect shadow)
+            {
+                shadow.Color = rgbColor;
+            }
         }
 
         public static System.Windows.Media.Color HSLtoRGB(float h, float s, float l)

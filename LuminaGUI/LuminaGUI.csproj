@@ -14,4 +14,10 @@
     <Resource Include="Logo.ico" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Page Update="Styles.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
 </Project>
