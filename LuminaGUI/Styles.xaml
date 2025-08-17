@@ -51,6 +51,7 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="1,1,1,0"
+                            CornerRadius="3"
                             Padding="5">
 						<TextBlock x:Name="HeaderText"
                                    Text="{TemplateBinding Header}"
@@ -68,5 +69,118 @@
 		</Setter>
 		<Setter Property="Cursor" Value="Hand"/>
 	</Style>
+	
+	<!-- Стиль для кнопки закрытия -->
+	<Style x:Key="CloseButtonStyle" TargetType="Button">
+		<Setter Property="Background" Value="Transparent"/>
+		<Setter Property="Foreground" Value="White"/>
+		<Setter Property="BorderBrush" Value="Transparent"/>
+		<Setter Property="Cursor" Value="Hand"/>
+		<Setter Property="Padding" Value="0"/>
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="Button">
+					<Border x:Name="Bd"
+							Background="{TemplateBinding Background}"
+							BorderBrush="{TemplateBinding BorderBrush}"
+							BorderThickness="1"
+							CornerRadius="3"
+							Padding="{TemplateBinding Padding}">
+						<ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+										  Content="{TemplateBinding Content}"/>
+					</Border>
+					<ControlTemplate.Triggers>
+						<Trigger Property="IsMouseOver" Value="True">
+							<Setter TargetName="Bd" Property="Background" Value="#571717"/>
+							<Setter Property="Foreground" Value="White"/>
+						</Trigger>
+						<Trigger Property="IsPressed" Value="True">
+							<Setter TargetName="Bd" Property="Background" Value="#AA0000"/>
+						</Trigger>
+					</ControlTemplate.Triggers>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
+
+    <Style x:Key="FormButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="#121212"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd"
+						Background="{TemplateBinding Background}"
+						BorderBrush="{TemplateBinding BorderBrush}"
+						BorderThickness="1"
+						CornerRadius="3"
+						Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+									  Content="{TemplateBinding Content}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="#1DE9B6"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#333333"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <Style TargetType="Slider">
+        <Setter Property="Height" Value="30"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Slider">
+                    <Grid>
+                        <!-- Фон трека -->
+                        <Border Height="16" VerticalAlignment="Center" Background="#2C2C2C" CornerRadius="4"/>
+                        <!-- Track с Thumb -->
+                        <Track x:Name="PART_Track" Maximum="{TemplateBinding Maximum}" Minimum="{TemplateBinding Minimum}" Value="{TemplateBinding Value}">
+                            <!-- Активная часть (DecreaseRepeatButton) -->
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton IsHitTestVisible="False" BorderThickness="0">
+                                    <RepeatButton.Template>
+                                        <ControlTemplate TargetType="RepeatButton">
+                                            <Border Height="16" Background="#1DE9B6" CornerRadius="4,0,0,4"
+                                                Margin="0,0, -4,0"/>
+                                        </ControlTemplate>
+                                    </RepeatButton.Template>
+                                </RepeatButton>
+                            </Track.DecreaseRepeatButton>
+
+                            <!-- Thumb -->
+                            <Track.Thumb>
+                                <Thumb Width="16" Height="16">
+                                    <Thumb.Template>
+                                        <ControlTemplate TargetType="Thumb">
+                                            <Border Width="16" Height="16" Background="#1DE9B6" BorderThickness="0" CornerRadius="4" />
+                                        </ControlTemplate>
+                                    </Thumb.Template>
+                                </Thumb>
+                            </Track.Thumb>
+                            <!-- Неактивная часть (IncreaseRepeatButton) -->
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton IsHitTestVisible="False" BorderThickness="0">
+                                    <RepeatButton.Template>
+                                        <ControlTemplate TargetType="RepeatButton">
+                                            <Border Height="16" Background="Transparent" CornerRadius="4"/>
+                                        </ControlTemplate>
+                                    </RepeatButton.Template>
+                                </RepeatButton>
+                            </Track.IncreaseRepeatButton>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 
 </ResourceDictionary>

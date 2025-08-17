@@ -1,42 +1,59 @@
 ﻿using System;
 using System.Globalization;
-using System.IO;
+using System.Net;
+using System.Net.Sockets;
+using System.Threading;
 using System.Windows;
-using System.Windows.Forms;
+using System.Windows.Controls;
+using System.Windows.Forms; // для NotifyIcon
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 
 namespace LuminaGUI
 {
-    public partial class MainWindow : Window
+    public partial class MainWindow : System.Windows.Window
     {
         private System.Windows.Media.Color SelectedColor;
         private NotifyIcon trayIcon;
+
+        private UdpClient _udpClient;
+        private IPEndPoint _endpoint;
+        private Thread _sendThread;
+        private bool _isSending = false;
 
         public MainWindow()
         {
             InitializeComponent();
             UpdateColorPreview();
 
+            // восстановить настройки
+            IpTextBox.Text = Properties.Settings.Default.IpAddress;
+            UdpPortTextBox.Text = Properties.Settings.Default.UdpPort;
+            LedCountTextBox.Text = Properties.Settings.Default.LedCount;
+            StartMinimizedCheckBox.IsChecked = Properties.Settings.Default.StartMinimized;
+
+            // Если стоит запуск свернутым
+            if (Properties.Settings.Default.StartMinimized)
+            {
+                this.Hide();
+                this.WindowState = WindowState.Minimized;
+                this.ShowInTaskbar = false;
+            }
+
             // Инициализация tray icon
             trayIcon = new NotifyIcon();
             try
             {
-                // Используем ресурс WPF
                 var iconUri = new Uri("pack://application:,,,/Logo.ico");
                 var iconStream = System.Windows.Application.GetResourceStream(iconUri)?.Stream;
 
-
                 if (iconStream != null)
-                {
                     trayIcon.Icon = new System.Drawing.Icon(iconStream);
-                    trayIcon.Visible = true;
-                }
                 else
-                {
                     System.Windows.MessageBox.Show("Tray icon resource not found!");
-                }
+
+                trayIcon.Visible = true;
             }
             catch (Exception ex)
             {
@@ -59,6 +76,7 @@ namespace LuminaGUI
 
         private void Close_Click(object sender, RoutedEventArgs e)
         {
+            StopSending();
             this.Close();
         }
 
@@ -118,6 +136,87 @@ namespace LuminaGUI
             // Скрываем окно и показываем только в трее
             this.Hide();
             this.ShowInTaskbar = false;
+        }
+
+        private void SaveSettings_Click(object sender, RoutedEventArgs e)
+        {
+            // сохраняем настройки
+            Properties.Settings.Default.IpAddress = IpTextBox.Text;
+            Properties.Settings.Default.UdpPort = UdpPortTextBox.Text;
+            Properties.Settings.Default.LedCount = LedCountTextBox.Text;
+            Properties.Settings.Default.StartMinimized = StartMinimizedCheckBox.IsChecked == true;
+            Properties.Settings.Default.Save();
+            StopSending();
+            StartSending();
+        }
+
+        private void StartSending()
+        {
+            if (_isSending) return;
+
+            if (!int.TryParse(UdpPortTextBox.Text, out int port))
+            {
+                System.Windows.MessageBox.Show("Неверный UDP порт");
+                return;
+            }
+
+            if (!int.TryParse(LedCountTextBox.Text, out int ledCount))
+            {
+                System.Windows.MessageBox.Show("Неверное количество диодов");
+                return;
+            }
+
+            string ip = IpTextBox.Text;
+
+            try
+            {
+                _endpoint = new IPEndPoint(IPAddress.Parse(ip), port);
+            }
+            catch
+            {
+                System.Windows.MessageBox.Show("Неверный IP адрес");
+                return;
+            }
+
+            _udpClient = new UdpClient();
+            _isSending = true;
+
+            _sendThread = new Thread(() =>
+            {
+                while (_isSending)
+                {
+                    byte[] data = new byte[ledCount * 3];
+
+                    for (int i = 0; i < ledCount; i++)
+                    {
+                        data[i * 3] = SelectedColor.R;
+                        data[i * 3 + 1] = SelectedColor.G;
+                        data[i * 3 + 2] = SelectedColor.B;
+                    }
+
+                    try
+                    {
+                        _udpClient.Send(data, data.Length, _endpoint);
+                    }
+                    catch
+                    {
+                        // можно логировать ошибки
+                    }
+
+                    Thread.Sleep(1000 / 30); // FPS 30
+                }
+            })
+            {
+                IsBackground = true
+            };
+            _sendThread.Start();
+        }
+
+        private void StopSending()
+        {
+            _isSending = false;
+            _sendThread?.Join();
+            _udpClient?.Close();
         }
     }
 }
