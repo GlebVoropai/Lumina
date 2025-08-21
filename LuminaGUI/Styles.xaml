@@ -2,44 +2,75 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
 	<!-- Стиль для Button -->
-	<Style TargetType="Button">
-		<Setter Property="Background" Value="#1E1E1E"/>
-		<Setter Property="Foreground" Value="White"/>
-		<Setter Property="BorderBrush" Value="Transparent"/>
-		<Setter Property="Padding" Value="5,2"/>
-		<Setter Property="Cursor" Value="Hand"/>
-		<Setter Property="Template">
-			<Setter.Value>
-				<ControlTemplate TargetType="Button">
-					<Border x:Name="Bd"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="1"
-                            CornerRadius="3"
-                            Padding="{TemplateBinding Padding}">
-						<ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
-                                          Content="{TemplateBinding Content}"/>
-					</Border>
-					<ControlTemplate.Triggers>
-						<Trigger Property="IsMouseOver" Value="True">
-							<Setter TargetName="Bd" Property="Background" Value="#1E1E1E"/>
-							<Setter Property="Foreground" Value="#1DE9B6"/>
-						</Trigger>
-						<Trigger Property="IsPressed" Value="True">
-							<Setter TargetName="Bd" Property="Background" Value="#333333"/>
-							<Setter Property="Foreground" Value="#1DE9B6"/>
-						</Trigger>
-						<Trigger Property="IsEnabled" Value="False">
-							<Setter TargetName="Bd" Property="Background" Value="#2A2A2A"/>
-							<Setter Property="Foreground" Value="#888888"/>
-						</Trigger>
-					</ControlTemplate.Triggers>
-				</ControlTemplate>
-			</Setter.Value>
-		</Setter>
-	</Style>
+    <Style TargetType="Button">
+        <Setter Property="Background" Value="#1E1E1E"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Padding" Value="5,2"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="3"
+                        Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                      Content="{TemplateBinding Content}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
 
-	<!-- Стиль для TabItem -->
+                        <!-- Hover анимация -->
+                        <EventTrigger RoutedEvent="MouseEnter">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <ColorAnimation Storyboard.TargetName="Bd"
+                                                Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                To="#2C2C2C"
+                                                Duration="0:0:0.3"/>
+                                    <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)"
+                                                To="#1DE9B6"
+                                                Duration="0:0:0.3"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+
+                        <!-- Уход мышки -->
+                        <EventTrigger RoutedEvent="MouseLeave">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <ColorAnimation Storyboard.TargetName="Bd"
+                                                Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                To="#1E1E1E"
+                                                Duration="0:0:0.3"/>
+                                    <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)"
+                                                To="White"
+                                                Duration="0:0:0.3"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+
+                        <!-- Нажатие -->
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#2C2C2C"/>
+                            <Setter Property="Foreground" Value="#1DE9B6"/>
+                        </Trigger>
+
+                        <!-- Отключено -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Bd" Property="Background" Value="#2A2A2A"/>
+                            <Setter Property="Foreground" Value="#888888"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+    <!-- Стиль для TabItem -->
 	<Style TargetType="TabItem">
 		<Setter Property="Background" Value="Transparent"/>
 		<Setter Property="Foreground" Value="White"/>
@@ -63,7 +94,11 @@
 							<Setter TargetName="Bd" Property="Background" Value="#1E1E1E"/>
 							<Setter TargetName="HeaderText" Property="Foreground" Value="#1DE9B6"/>
 						</Trigger>
-					</ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="#1DE9B6"/>
+                            <Setter Property="Background" Value="#2C2C2C"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
 				</ControlTemplate>
 			</Setter.Value>
 		</Setter>
@@ -124,9 +159,10 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter Property="Foreground" Value="#1DE9B6"/>
+                            <Setter Property="Background" Value="#2C2C2C"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="#333333"/>
+                            <Setter TargetName="Bd" Property="Background" Value="#2C2C2C"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

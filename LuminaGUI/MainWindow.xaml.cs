@@ -1,39 +1,50 @@
 ﻿using System;
-using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Forms; // для NotifyIcon
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
+using System.Windows.Threading;
+using Color = System.Windows.Media.Color;
+using Cursors = System.Windows.Input.Cursors;
+using MessageBox = System.Windows.MessageBox;
 
 namespace LuminaGUI
 {
-    public partial class MainWindow : System.Windows.Window
+    public partial class MainWindow : Window
     {
-        private System.Windows.Media.Color SelectedColor;
-        private NotifyIcon trayIcon;
+        private float SelectedHue;
+        private float SelectedSaturation;
+        private float SelectedLightness;
+        private bool _updatingSliders = false;
 
-        private UdpClient _udpClient;
-        private IPEndPoint _endpoint;
-        private Thread _sendThread;
+        private TrayIconManager trayIcon;
+
+        private UdpClient? _udpClient;
+        private IPEndPoint? _endpoint;
         private bool _isSending = false;
+        private DispatcherTimer? _sendTimer;
 
         public MainWindow()
         {
-            InitializeComponent();
+            InitializeComponent(); // Создаём все элементы интерфейса
+
+            // Инициализируем стартовые HSL значения после создания слайдеров
+            SelectedHue = (float)HueSlider.Value;
+            SelectedSaturation = (float)SaturationSlider.Value / 100f;
+            SelectedLightness = (float)LightnessSlider.Value / 100f;
             UpdateColorPreview();
 
-            // восстановить настройки
+            InitializeColorPalette();
+
+            // Восстанавливаем настройки
             IpTextBox.Text = Properties.Settings.Default.IpAddress;
             UdpPortTextBox.Text = Properties.Settings.Default.UdpPort;
             LedCountTextBox.Text = Properties.Settings.Default.LedCount;
             StartMinimizedCheckBox.IsChecked = Properties.Settings.Default.StartMinimized;
 
-            // Если стоит запуск свернутым
             if (Properties.Settings.Default.StartMinimized)
             {
                 this.Hide();
@@ -41,31 +52,8 @@ namespace LuminaGUI
                 this.ShowInTaskbar = false;
             }
 
-            // Инициализация tray icon
-            trayIcon = new NotifyIcon();
-            try
-            {
-                var iconUri = new Uri("pack://application:,,,/Logo.ico");
-                var iconStream = System.Windows.Application.GetResourceStream(iconUri)?.Stream;
-
-                if (iconStream != null)
-                    trayIcon.Icon = new System.Drawing.Icon(iconStream);
-                else
-                    System.Windows.MessageBox.Show("Tray icon resource not found!");
-
-                trayIcon.Visible = true;
-            }
-            catch (Exception ex)
-            {
-                System.Windows.MessageBox.Show($"Tray icon load error: {ex.Message}");
-            }
-
-            trayIcon.DoubleClick += (s, args) =>
-            {
-                this.Show();
-                this.WindowState = WindowState.Normal;
-                this.ShowInTaskbar = true;
-            };
+            // Инициализация иконки в трее
+            trayIcon = new TrayIconManager();
         }
 
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -87,29 +75,31 @@ namespace LuminaGUI
 
         private void HSLSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            if (HueSlider == null || SaturationSlider == null || LightnessSlider == null || ColorPreview == null)
+            if (_updatingSliders) return;
+
+            // Проверяем, что слайдеры уже созданы
+            if (HueSlider == null || SaturationSlider == null || LightnessSlider == null)
                 return;
+
+            SelectedHue = (float)HueSlider.Value;
+            SelectedSaturation = (float)SaturationSlider.Value / 100f;
+            SelectedLightness = (float)LightnessSlider.Value / 100f;
 
             UpdateColorPreview();
         }
 
         private void UpdateColorPreview()
         {
-            float h = (float)HueSlider.Value;
-            float s = (float)SaturationSlider.Value / 100f;
-            float l = (float)LightnessSlider.Value / 100f;
+            var color = HSLtoRGB(SelectedHue, SelectedSaturation, SelectedLightness);
 
-            System.Windows.Media.Color rgbColor = HSLtoRGB(h, s, l);
+            if (ColorPreview != null)
+                ColorPreview.Background = new SolidColorBrush(color);
 
-            ColorPreview.Background = new SolidColorBrush(rgbColor);
-            SelectedColor = rgbColor;
-            if (ColorPreview.Effect is DropShadowEffect shadow)
-            {
-                shadow.Color = rgbColor;
-            }
+            if (ColorPreview?.Effect is DropShadowEffect shadow)
+                shadow.Color = color;
         }
 
-        public static System.Windows.Media.Color HSLtoRGB(float h, float s, float l)
+        public static Color HSLtoRGB(float h, float s, float l)
         {
             float c = (1 - Math.Abs(2 * l - 1)) * s;
             float x = c * (1 - Math.Abs((h / 60f) % 2 - 1));
@@ -128,24 +118,23 @@ namespace LuminaGUI
             byte g = (byte)((g1 + m) * 255);
             byte b = (byte)((b1 + m) * 255);
 
-            return System.Windows.Media.Color.FromRgb(r, g, b);
+            return Color.FromRgb(r, g, b);
         }
 
         private void Accept_Click(object sender, RoutedEventArgs e)
         {
-            // Скрываем окно и показываем только в трее
             this.Hide();
             this.ShowInTaskbar = false;
         }
 
         private void SaveSettings_Click(object sender, RoutedEventArgs e)
         {
-            // сохраняем настройки
             Properties.Settings.Default.IpAddress = IpTextBox.Text;
             Properties.Settings.Default.UdpPort = UdpPortTextBox.Text;
             Properties.Settings.Default.LedCount = LedCountTextBox.Text;
             Properties.Settings.Default.StartMinimized = StartMinimizedCheckBox.IsChecked == true;
             Properties.Settings.Default.Save();
+
             StopSending();
             StartSending();
         }
@@ -156,13 +145,13 @@ namespace LuminaGUI
 
             if (!int.TryParse(UdpPortTextBox.Text, out int port))
             {
-                System.Windows.MessageBox.Show("Неверный UDP порт");
+                MessageBox.Show("Invalid UDP port");
                 return;
             }
 
             if (!int.TryParse(LedCountTextBox.Text, out int ledCount))
             {
-                System.Windows.MessageBox.Show("Неверное количество диодов");
+                MessageBox.Show("Invalid LED count");
                 return;
             }
 
@@ -171,52 +160,103 @@ namespace LuminaGUI
             try
             {
                 _endpoint = new IPEndPoint(IPAddress.Parse(ip), port);
+                _udpClient = new UdpClient();
             }
             catch
             {
-                System.Windows.MessageBox.Show("Неверный IP адрес");
+                MessageBox.Show("Invalid IP address");
                 return;
             }
 
-            _udpClient = new UdpClient();
-            _isSending = true;
-
-            _sendThread = new Thread(() =>
+            _sendTimer = new DispatcherTimer
             {
-                while (_isSending)
-                {
-                    byte[] data = new byte[ledCount * 3];
-
-                    for (int i = 0; i < ledCount; i++)
-                    {
-                        data[i * 3] = SelectedColor.R;
-                        data[i * 3 + 1] = SelectedColor.G;
-                        data[i * 3 + 2] = SelectedColor.B;
-                    }
-
-                    try
-                    {
-                        _udpClient.Send(data, data.Length, _endpoint);
-                    }
-                    catch
-                    {
-                        // можно логировать ошибки
-                    }
-
-                    Thread.Sleep(1000 / 30); // FPS 30
-                }
-            })
-            {
-                IsBackground = true
+                Interval = TimeSpan.FromMilliseconds(1000 / 30) // FPS 30
             };
-            _sendThread.Start();
+            _sendTimer.Tick += (s, e) =>
+            {
+                if (_udpClient == null || _endpoint == null) return;
+
+                byte[] data = new byte[ledCount * 3];
+
+                for (int i = 0; i < ledCount; i++)
+                {
+                    data[i * 3] = (byte)(SelectedHue / 360f * 255);
+                    data[i * 3 + 1] = (byte)(SelectedSaturation * 255);
+                    data[i * 3 + 2] = (byte)(SelectedLightness * 255);
+                }
+
+                try
+                {
+                    _udpClient.Send(data, data.Length, _endpoint);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("UDP send error: " + ex.Message);
+                }
+            };
+
+            _sendTimer.Start();
+            _isSending = true;
+            MessageBox.Show("Started sending colors");
         }
 
         private void StopSending()
         {
             _isSending = false;
-            _sendThread?.Join();
+            _sendTimer?.Stop();
             _udpClient?.Close();
+            MessageBox.Show("Stopped sending colors");
+        }
+
+        private void SetHSLValues(float h, float s, float l)
+        {
+            SelectedHue = h;
+            SelectedSaturation = s;
+            SelectedLightness = l;
+
+            if (HueSlider == null || SaturationSlider == null || LightnessSlider == null) return;
+
+            _updatingSliders = true;
+
+            HueSlider.Value = SelectedHue;
+            SaturationSlider.Value = SelectedSaturation * 100;
+            LightnessSlider.Value = SelectedLightness * 100;
+
+            _updatingSliders = false;
+
+            UpdateColorPreview();
+        }
+
+        private void InitializeColorPalette()
+        {
+            var rand = new Random();
+            int cellCount = 27;
+
+            for (int i = 0; i < cellCount; i++)
+            {
+                float h = (float)(rand.NextDouble() * 360);
+                float s = (float)(rand.NextDouble());
+                float l = (float)(rand.NextDouble());
+
+                var color = HSLtoRGB(h, s, l);
+
+                var border = new Border
+                {
+                    Width = 24,
+                    Height = 24,
+                    Background = new SolidColorBrush(color),
+                    Margin = new Thickness(2),
+                    CornerRadius = new CornerRadius(4),
+                    Cursor = Cursors.Hand
+                };
+
+                border.MouseLeftButtonDown += (sObj, e) =>
+                {
+                    SetHSLValues(h, s, l);
+                };
+
+                ColorPalettePanel.Children.Add(border);
+            }
         }
     }
 }
