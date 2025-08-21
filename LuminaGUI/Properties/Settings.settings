@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings"
+              CurrentProfile="(Default)">
+	<Profiles />
+	<Settings>
+		<Setting Name="IpAddress" Type="System.String" Scope="User">
+			<Value Profile="(Default)">192.168.1.100</Value>
+		</Setting>
+		<Setting Name="UdpPort" Type="System.String" Scope="User">
+			<Value Profile="(Default)">4210</Value>
+		</Setting>
+		<Setting Name="LedCount" Type="System.String" Scope="User">
+			<Value Profile="(Default)">60</Value>
+		</Setting>
+		<Setting Name="StartMinimized" Type="System.Boolean" Scope="User">
+			<Value Profile="(Default)">False</Value>
+		</Setting>
+	</Settings>
+</SettingsFile>

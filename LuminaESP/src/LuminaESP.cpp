@@ -24,6 +24,27 @@ const unsigned long fadeInterval = 30; // мс
 unsigned long lastPacketTime = 0;
 const unsigned long packetTimeout = 2000; // 2 сек
 
+// --- HSL to RGB function ---
+CRGB HSLtoRGB(float h, float s, float l) {
+  float c = (1.0f - fabs(2.0f * l - 1.0f)) * s;
+  float x = c * (1.0f - fabs(fmod(h / 60.0f, 2) - 1.0f));
+  float m = l - c / 2.0f;
+  float r1, g1, b1;
+
+  if (h < 60)       { r1 = c; g1 = x; b1 = 0; }
+  else if (h < 120) { r1 = x; g1 = c; b1 = 0; }
+  else if (h < 180) { r1 = 0; g1 = c; b1 = x; }
+  else if (h < 240) { r1 = 0; g1 = x; b1 = c; }
+  else if (h < 300) { r1 = x; g1 = 0; b1 = c; }
+  else              { r1 = c; g1 = 0; b1 = x; }
+
+  uint8_t r = (uint8_t)((r1 + m) * 255);
+  uint8_t g = (uint8_t)((g1 + m) * 255);
+  uint8_t b = (uint8_t)((b1 + m) * 255);
+
+  return CRGB(r, g, b);
+}
+
 void setup() {
   Serial.begin(115200);
   FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
@@ -61,7 +82,7 @@ void loop() {
       } else {
         brightness -= 5;
         if (brightness == 0) {
-          currentState = NORMAL_OPERATION; // закончили один плавный миг
+          currentState = NORMAL_OPERATION;
         }
       }
     }
@@ -71,15 +92,20 @@ void loop() {
   if (currentState == NORMAL_OPERATION) {
     int packetSize = udp.parsePacket();
     if (packetSize == NUM_LEDS * 3) {
-      byte rgb[NUM_LEDS * 3];
-      udp.read(rgb, NUM_LEDS * 3);
+      byte data[NUM_LEDS * 3];
+      udp.read(data, NUM_LEDS * 3);
 
       for (int i = 0; i < NUM_LEDS; i++) {
-        leds[i] = CRGB(rgb[i * 3], rgb[i * 3 + 1], rgb[i * 3 + 2]);
+        // Предполагаем, что приходят H, S, L в диапазоне 0-255
+        float h = (float)data[i * 3] / 255.0f * 360.0f;
+        float s = (float)data[i * 3 + 1] / 255.0f;
+        float l = (float)data[i * 3 + 2] / 255.0f;
+
+        leds[i] = HSLtoRGB(h, s, l);
       }
 
       FastLED.show();
-      lastPacketTime = millis(); // обновляем время приёмa пакета
+      lastPacketTime = millis();
     }
 
     // --- Timeout check ---

@@ -1,0 +1,120 @@
+﻿<Window x:Class="LuminaGUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="LuminaGUI" Height="400" Width="600"
+        AllowsTransparency="True" Background="Transparent" WindowStyle="None">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border Background="#121212" Opacity="0.95" CornerRadius="5" BorderThickness="0" Padding="5">
+        <Grid>
+            <!-- Определяем три ряда -->
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <!-- Title bar -->
+                <RowDefinition Height="*"/>
+                <!-- TabControl с колонками -->
+                <RowDefinition Height="Auto"/>
+                <!-- Bottom button -->
+            </Grid.RowDefinitions>
+
+            <!-- Верхняя панель -->
+            <DockPanel Grid.Row="0" Background="Transparent" Height="20" VerticalAlignment="Top" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <TextBlock Text="LUMINA" Foreground="White" Margin="10,5,10,0" FontFamily="Yu Gothic Medium" Width="47"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="–" Width="30" Height="20" Click="Minimize_Click" Background="Transparent" Foreground="White" BorderBrush="Transparent" Padding="5,0,5,2"/>
+                    <Button Content="x" Width="30" Height="20" Click="Close_Click" Style="{StaticResource CloseButtonStyle}" Padding="0,0,0,5"/>
+                </StackPanel>
+            </DockPanel>
+
+            <!-- TabControl -->
+            <TabControl Grid.Row="1" Margin="10,5,10,5" Background="Transparent" BorderBrush="Transparent">
+                <!-- Static Mode Tab -->
+                <TabItem Header="Static Mode">
+                    <Border CornerRadius="3" Background="#1E1E1E" ClipToBounds="True">
+                        <Grid Cursor="Arrow">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Vertical" Grid.Column="0" Margin="10">
+                                <TextBlock Text="Hue" Foreground="White"/>
+                                <Slider x:Name="HueSlider" Minimum="0" Maximum="360" ValueChanged="HSLSlider_ValueChanged" Cursor="Hand"/>
+                                <TextBlock Text="Saturation" Foreground="White" Margin="0,10,0,0"/>
+                                <Slider x:Name="SaturationSlider" Minimum="0" Maximum="100" ValueChanged="HSLSlider_ValueChanged" Cursor="Hand" Value="50"/>
+                                <TextBlock Text="Lightness" Foreground="White" Margin="0,10,0,0"/>
+                                <Slider x:Name="LightnessSlider" Minimum="0" Maximum="100" ValueChanged="HSLSlider_ValueChanged" Cursor="Hand" Value="33"/>
+                                <TextBlock Text="Preset Colors" Foreground="White" Margin="0,5,0,0"/>
+                                <ScrollViewer Height="91" VerticalScrollBarVisibility="Auto">
+                                    <WrapPanel x:Name="ColorPalettePanel" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                </ScrollViewer>
+                            </StackPanel>
+                            <Border x:Name="ColorPreview" Background="Black" Grid.Column="1" Margin="30" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                <Border.Effect>
+                                    <DropShadowEffect x:Name="ColorPreviewShadow" Color="Black" 
+                                  BlurRadius="40" ShadowDepth="0" Direction="100" Opacity="0.7"/>
+                                </Border.Effect>
+                            </Border>
+                        </Grid>
+                    </Border>
+                </TabItem>
+
+                <!-- Ambilight Mode Tab (аналогично) -->
+                <TabItem Header="Ambilight Mode">
+                    <Grid Background="#1E1E1E">
+                        <StackPanel Margin="10">
+                            <TextBlock Text="Smoothness" Foreground="White"/>
+                            <Slider x:Name="SmoothnessSlider" Minimum="0" Maximum="100" Value="10"/>
+                            <TextBlock Text="Brightness" Margin="0,10,0,0" Foreground="White"/>
+                            <Slider x:Name="AmbilightBrightnessSlider" Minimum="0" Maximum="100" Value="50"/>
+                            <TextBlock Text="Saturation" Margin="0,10,0,0" Foreground="White"/>
+                            <Slider x:Name="AmbilightSaturationSlider" Minimum="0" Maximum="100" Value="80"/>
+                        </StackPanel>
+                    </Grid>
+                </TabItem>
+                <TabItem Header="Settings">
+                    <Grid>
+                        <!-- Определяем 2 ряда -->
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid Background="#1E1E1E">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Margin="10,0,0,0" VerticalAlignment="Center" Width="258" HorizontalAlignment="Left" Height="270" Grid.Column="0">
+                                <!-- IP Address -->
+                                <TextBlock Text="Board settings" Foreground="White" Margin="0,5,0,0" FontWeight="Bold"/>
+                                <TextBlock Text="IP Address" Foreground="White" Margin="0,5,0,0"/>
+                                <TextBox x:Name="IpTextBox" Text="192.168.1.100" Margin="0,2,0,10" Background="#2A2A2A" Foreground="White" BorderBrush="#555555"/>
+                                <!-- UDP Port -->
+                                <TextBlock Text="UDP Port" Foreground="White" Margin="0,5,0,0"/>
+                                <TextBox x:Name="UdpPortTextBox" Text="4210" Margin="0,2,0,10" Background="#2A2A2A" Foreground="White" BorderBrush="#555555" Cursor=""/>
+                                <!-- Number of LEDs -->
+                                <TextBlock Text="Number of LEDs" Foreground="White" Margin="0,5,0,0"/>
+                                <TextBox x:Name="LedCountTextBox" Text="60" Margin="0,2,0,10" Background="#2A2A2A" Foreground="White" BorderBrush="#555555"/>
+                            </StackPanel>
+                            <StackPanel Margin="10,0,0,0" VerticalAlignment="Center" Width="258" HorizontalAlignment="Left" Height="270" Grid.Column="1">
+                                <TextBlock Text="Startup" Foreground="White" Margin="0,5,0,0" FontWeight="Bold"/>
+                                <CheckBox x:Name="StartMinimizedCheckBox" Content="Run minimized" Foreground="White" Margin="0,5,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                        <Button Content="Save" Height="30"  Style="{StaticResource FormButtonStyle}" Click="SaveSettings_Click" Margin="10,250,10,10"/>
+                    </Grid>
+                </TabItem>
+            </TabControl>
+            <!-- Bottom Accept button -->
+            <Grid Grid.Row="2">
+                <Button Content="Accept" Height="30" HorizontalAlignment="Center" Margin="0,0,0,5" Click="Accept_Click" Width="570"/>
+            </Grid>
+        </Grid>
+    </Border>
+
+</Window>
